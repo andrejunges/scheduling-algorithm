@@ -1,0 +1,11 @@
+{
+  "name": "Algorithm",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "André Junges",
+  "license": "MIT",
+  "dependencies": {
+    "lodash": "^4.16.4",
+    "sylvester": "^0.0.21"
+  }
+}
