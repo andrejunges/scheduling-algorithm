@@ -19,6 +19,14 @@ const sortWithIndeces = (toSort) => {
   return toSort;
 }
 
+const logMatriz = (matriz) => {
+  for (let i = 0; i < matriz.length; i++) {
+    for (let j = 0; j < matriz[i].length; j++) {
+      console.log(matriz[i][j] + '   ');
+    }
+    console.log('\n');
+  }
+}
 const log = matrix => console.log(matrix.inspect());
 const print = (title, matrix) => {
   console.log('\n\n------------------------------------------------------------------------------------------');
@@ -51,7 +59,7 @@ const linspace = (initial, end) => {
 const multiplyRowsPerColumns = (rows, cols) => {
   let val = 0;
   let r = Array.isArray(rows[0]) ? rows[0] : rows;
-  for (let i = 0; i < rows.length; i++) {
+  for (let i = 0; i < r.length; i++) {
     val += r[i] * cols[i];
   }
 
@@ -129,6 +137,7 @@ Array.prototype.setColumn = function(values, index) {
 
 module.exports = {
   log,
+  logMatriz,
   print,
   findIndexes,
   linspace,

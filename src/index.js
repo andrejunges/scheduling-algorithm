@@ -6,8 +6,11 @@ const mochilaCmz = require('./mochilaCmz');
 const mochilaFmm = require('./mochilaFmm');
 const mochilaFinal = require('./mochilaFinal');
 const relatorio = require('./relatorio');
+const dSimplex = require('./dSimplex');
+const atualiza = require('./atualiza');
 const {
   log,
+  logMatriz,
   print,
   findIndexes,
   linspace,
@@ -44,27 +47,35 @@ function algorithm(L, d, l, set_max) {
   rnd_a = divisionByFloat(rnd_a, cut_set);
   const m_ones = ones(l.cols());
   const m_eye = eye(l.cols());
-  const num = (m_ones.subtract(m_eye)).multiply(rnd_a);
+  let num = (m_ones.subtract(m_eye)).multiply(rnd_a);
 
   print('Matriz Setup', num);
 
   // -----------------------------------------------------------
   // Atribuições
+  num = createMatrix([
+    [0, 0.0747, 0.4844, 0.4902, 0.4730],
+    [0.1095, 0, 0.2159, 0.0451, 0.0393],
+    [0.3767, 0.5000, 0, 0.4866, 0.4788],
+    [0.3381, 0.1529, 0.1571, 0, 0.1220],
+    [0.2857, 0.0271, 0.4709, 0.4037, 0]
+  ]);
+  // log(num);
   let ST = num;
   const type = 1;
   const iteracao = 1;
   const limite = 3000;
   let rel = 0;
-  const xb_aux = [];
+  let xb_aux = [];
 
 
   // -----------------------------------------------------------
   // Passo 2 - Montagem da Matriz A
   const { B, N, A, b } = montaMatriz(L, l, d, type);
 
-  const invB = inverse(B);
+  let invB = inverse(B);
   const { rows: n, cols: m } = B.dimensions();
-  const vk = zeros(1, m);
+  let vk = zeros(1, m);
 
 
   // -----------------------------------------------------------
@@ -117,7 +128,7 @@ function algorithm(L, d, l, set_max) {
         duoElements.set(matrix_sort.row(busca.get(j) + 1).elements, j); // CUIDAR INDICES ###
       }
 
-      const duoMatrix = createMatrix(duoElements);
+      let duoMatrix = createMatrix(duoElements);
       // log(duoMatrix);
 
       const cols = entrada.cols();
@@ -127,6 +138,7 @@ function algorithm(L, d, l, set_max) {
         
         // duoElements[kill] = [];
         duoElements.splice(kill, 1); // INDICE ##
+        duoMatrix = createMatrix(duoElements);
       }
 
       saida = duoElements.get(1).get(3); // 1 3 - INDICE ##
@@ -150,7 +162,7 @@ function algorithm(L, d, l, set_max) {
 
   let final_sort = createMatrix(sortrows(final, final[0].length - 1)); // nro de colunas
   final_sort = final_sort.minor(1, 1, final_sort.rows(), final_sort.cols() - 1);
-  // log(final_sort);
+  log(final_sort);
 
   // -----------------------------------------------------------
   // Reordena
@@ -172,6 +184,9 @@ function algorithm(L, d, l, set_max) {
     vpxElems[i - 1] = createMatrix(vpaElems).col(i).elements.sum(); // Matriz com os somatórios
   }
   const vpidx = linspace(1, nvp) // DOUBLE CHECK
+  let xb;
+  let kkElems = [];
+  let vkElems = [];
 
   for (let k = 1; k <= limite; k++) { // Loop para iteração
     if (rel === 0) {
@@ -180,7 +195,7 @@ function algorithm(L, d, l, set_max) {
       // -----------------------------------------------------------
       // Passo 4 - Calcular a Solução Básica
 
-      let xb = invB.multiply(b); // xb recebe a solução básica
+      xb = invB.multiply(b); // xb recebe a solução básica
       const minValue = _.min(xb.elements);
       if (minValue < 0) { // Testa a solução básica (se < 0 FIM com nova entrada)
         console.log('xb não respeitou a condição de não negatividade!');
@@ -206,7 +221,9 @@ function algorithm(L, d, l, set_max) {
       let fmax = 0;
 
       while (fim === 0) {
-        let { fmax: _fmax, si } = mochilaTesta(dmoElems, mk, sitElems); // Calcula o retorno si
+        let { fmax: _fmax, si: _si } = mochilaTesta(dmoElems, mk, sitElems); // Calcula o retorno si
+        console.log(k, '<<<<<<<<<<<<<<<<<<')
+        siElems = _si;
         fmax = _fmax;
         let icmz = mochilaCmz(sitElems, mk); // Encontra primeiro coef > 0
 
@@ -231,63 +248,40 @@ function algorithm(L, d, l, set_max) {
           sitElems[mk - 2] = Math.floor(L - aux) / dmoElems[1][mk - 2]; // ## INDICE
           fim = 1;
         }
-
-        console.log(fim, 'LEAVEE');
       }
 
-      let kkElems = [];
-      let vkElems = vk.elements;
       for (let i = 1; i <= mk; i++) { // Vetor da Mochila
         const colAux = dmoElems[2][i - 1]; // ## INDICE
-        const valAux = siElems[0][i - 1]; // ## INDICE
+        const valAux = siElems[i - 1]; // ## INDICE
         kkElems.setColumn([valAux], colAux); 
       }
       for (let i = 1; i <= (mk - 1); i++) {
-        vkElems[0][i - 1] = kkElems[0][i - 1]; // ## INDICE
+        vkElems[i - 1] = kkElems[0][i]; // ## INDICE ## DOUBLE ATTENTION
       }
-      vkElems = rowsToColumns(vkElems);
+      // vkElems = rowsToColumns(vkElems);
       let crel = dmoElems[1][mk - 1] - multiplyRowsPerColumns(vm.elements, vkElems); // ## INDICE
 
-      console.log('YOOOOOOO');
       if (crel < 0 && Math.abs(crel) > Number.EPSILON) {
-        [ind, DS, AP] = D_Simplex(invB, vk, m, xb);
+        const { ind, DS, AP } = dSimplex(invB, vkElems, m, xb);
         console.log('A coluna que sai é X ${ind} \n\n');
         console.log('Nova invB');
+
+        let invBElems = invB.elements;
+        invBElems = atualiza(DS, invBElems, cb, m, ind);
+        invB = createMatrix(invBElems);
+
+        log(invB);
       } else {
-        console.log('YAAAA');
-        relatorio(xb, invB, l, L, b, d, iteracao); // %m, cf,
+        relatorio(xb, invB, l, L, b, d, k); // %m, cf,
         // beep
         rel = 1;
         // toc
       }
-
-      // vk = vk.';
-      // vk = zeros(1, m);
-      // xb_aux = xb;
     }
-  }
-}
 
-// // Atualiza a matriz A para nova iteração 
-// function [invB] = Atualiza(DS, invB, cb, m, ind)
-//   for j = 1:m
-//       invB(ind, j) = (- 1 / (DS(cb(ind))) * invB(ind, j));
-//       for i = 1:m
-//         if i ~= ind
-//           invB(i, j) = invB(i, j) + (DS(cb(i)) * invB(ind, j));
-//         end
-//       end
-//   end
-// end
-
-// Atualiza a matriz A para nova iteração
-function atualiza(DS, invB, cb, m, ind) {
-  for (let j = 1; j <= m; j++) {
-    // invB[ind - 1][j - 1] = (- 1 / (DS(cb(ind))) * invB(ind, j));
-
-    for (let i = 1; i <= ind; i++) {
-
-    }
+    // vk = vk.';
+    vk = zeros(1, m);
+    xb_aux = xb;
   }
 }
 

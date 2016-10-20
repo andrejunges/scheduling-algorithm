@@ -55,18 +55,18 @@ module.exports = (L, N, l, cn, cb, vm, ST, m, vpidx, vp, iteracao) => {
   console.log(dmoElems);
 
   // Roerdena
-  const vpok = vp.row(vpidx[iteracao]); // Sequência escolhida
+  const vpok = vp.row(vpidx[iteracao - 1]); // Sequência escolhida
   console.log(`\nIteração Número: ${iteracao} \n`);
   console.log(`Índice do arranjo na matriz não ordenada (vp): ${vpidx[iteracao]} \n`);
   console.log('Arranjo escolhido:')
   log(vpok);
   console.log('--------------------------------------\n\n')
 
-  let dmroElements = [].concat(dmoElems);
+  let dmroElements = _.cloneDeep(dmoElems);
   const vpokLength = vpok.cols();
   for (let i = 1; i <= vpokLength; i++) {
     const zi = _.findIndex(dmoElems[2], x => x === vpok.e(i));
-    dmroElements.setColumn(dmElems.getColumn(zi + 1), i - 1);
+    dmroElements.setColumn(dmoElems.getColumn(zi), i - 1);
   }
   console.log('Dmo reordenado')
   console.log(dmroElements);
@@ -86,11 +86,11 @@ module.exports = (L, N, l, cn, cb, vm, ST, m, vpidx, vp, iteracao) => {
   let aux = L;
   const siElems = zeros(1, mk).elements;
   for (let i = 1; i <= mk; i++) { // Montagem do vetor
-    siElems[i - 1] = Math.floor(aux / dmoElems[2][i - 1]);
-    aux = aux - siElems[i - 1] * dmoElems[2][i - 1];
+    siElems[i - 1] = Math.floor(aux / dmoElems[1][i - 1]);
+    aux = aux - siElems[i - 1] * dmoElems[1][i - 1];
   }
   const fmax = 0; // Retorno máximo da mochila
-  const sitElems = siElems;
+  const sitElems = [].concat(siElems);
   // Solução Inicial (vetor de trabalho)
 
   return { dmoElems, mk, siElems, sitElems, vpok };

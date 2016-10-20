@@ -20,7 +20,7 @@ module.exports = (xb, invB, l, L, b, d, iteracao) => {
   const r_final = [];
   const soma_linha = [];
   const soma_coluna = [];
-  const pcorte = inverse(invB);
+  const pcorte = invB.inv(); // why??
   const { rows: mcorte, cols: ncorte } = pcorte.dimensions();
   const lcorte = rowsToColumns(l.elements); // l.';
   // log(lcorte);
@@ -85,7 +85,7 @@ module.exports = (xb, invB, l, L, b, d, iteracao) => {
   console.log('===================================================================== ');
   console.log('Para atender a demanda: \n');
   for (let i = 1; i <= l.cols(); i++) {
-    console.log(`A linha ${i} --> Repetir a programação ${solucao[i - 1]} vezes. \n`);
+    console.log(`A linha ${i} --> Repetir a programação ${Math.round(solucao[i - 1])} vezes. \n`);
   }
   console.log('===================================================================== ');
   // soma_linha = [0; soma_linha; 0];
