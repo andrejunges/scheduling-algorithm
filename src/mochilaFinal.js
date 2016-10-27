@@ -1,6 +1,7 @@
 // Verifica se todo vetor da mochila foi lido
 module.exports = (icmz, sitElems) => {
   let temp = icmz;
+  let fim;
   icmz = 0;
   while (icmz === 0) {
     if (sitElems[temp - 1] > 0) {
